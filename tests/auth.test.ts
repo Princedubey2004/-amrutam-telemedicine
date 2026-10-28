@@ -228,6 +228,41 @@ describe('Authentication Module Unit & API Tests', () => {
       expect(res.body.success).toBe(false);
       expect(res.body.error.message).toBe('Invalid email or password');
     });
+
+    it('should successfully authenticate the documented development seed credentials', async () => {
+      const devPassword = 'DevSecurePassword123!';
+      const devHash = bcrypt.hashSync(devPassword, 10);
+
+      vi.spyOn(prisma.user, 'findUnique').mockResolvedValue({
+        id: 'patient-seed-demo-id',
+        email: 'patient.test@example.com',
+        passwordHash: devHash,
+        role: Role.PATIENT,
+        isActive: true,
+        isEmailVerified: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        profile: {
+          id: 'profile-seed-demo-id',
+          firstName: 'Rahul',
+          lastName: 'Verma',
+          avatarUrl: null
+        }
+      } as never);
+
+      const res = await request(app)
+        .post('/api/v1/auth/login')
+        .send({
+          email: 'patient.test@example.com',
+          password: devPassword
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveProperty('token');
+      expect(res.body.data.user.email).toBe('patient.test@example.com');
+      expect(res.body.data.user.role).toBe('PATIENT');
+    });
   });
 
   describe('GET /api/v1/auth/me', () => {

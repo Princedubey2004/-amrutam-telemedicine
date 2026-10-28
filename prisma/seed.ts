@@ -1,9 +1,10 @@
+import bcrypt from 'bcryptjs';
 import { PrismaClient, Role, DoctorStatus, SlotStatus, Gender } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Safe deterministic bcrypt hash for 'DevSecurePassword123!' (cost 10)
-const DEV_PASSWORD_HASH = '$2b$10$wT0r6e14OQoXU2xsmz3l7e0Ww2eA6i/Vw1R1w8A9vM4Qf7e2A2LWy';
+// Documented development demo password for synthetic test accounts
+const DEV_PASSWORD = 'DevSecurePassword123!';
 
 async function main(): Promise<void> {
   if (process.env.NODE_ENV === 'production') {
@@ -12,14 +13,22 @@ async function main(): Promise<void> {
 
   console.log('🌱 Starting safe development database seed...');
 
+  // Generate verified bcrypt hash for documented dev password using project bcryptjs library
+  const devPasswordHash = await bcrypt.hash(DEV_PASSWORD, 10);
+
   // 1. Seed Synthetic Administrator
   const admin = await prisma.user.upsert({
     where: { email: 'admin.amrutam@example.com' },
-    update: {},
+    update: {
+      passwordHash: devPasswordHash,
+      isActive: true,
+      isEmailVerified: true
+    },
     create: {
       email: 'admin.amrutam@example.com',
-      passwordHash: DEV_PASSWORD_HASH,
+      passwordHash: devPasswordHash,
       role: Role.ADMIN,
+      isActive: true,
       isEmailVerified: true,
       profile: {
         create: {
@@ -36,11 +45,16 @@ async function main(): Promise<void> {
   // 2. Seed Synthetic Doctor User & Doctor Profile
   const doctorUser = await prisma.user.upsert({
     where: { email: 'dr.sharma.ayurveda@example.com' },
-    update: {},
+    update: {
+      passwordHash: devPasswordHash,
+      isActive: true,
+      isEmailVerified: true
+    },
     create: {
       email: 'dr.sharma.ayurveda@example.com',
-      passwordHash: DEV_PASSWORD_HASH,
+      passwordHash: devPasswordHash,
       role: Role.DOCTOR,
+      isActive: true,
       isEmailVerified: true,
       profile: {
         create: {
@@ -76,11 +90,16 @@ async function main(): Promise<void> {
   // 3. Seed Synthetic Patient
   const patient = await prisma.user.upsert({
     where: { email: 'patient.test@example.com' },
-    update: {},
+    update: {
+      passwordHash: devPasswordHash,
+      isActive: true,
+      isEmailVerified: true
+    },
     create: {
       email: 'patient.test@example.com',
-      passwordHash: DEV_PASSWORD_HASH,
+      passwordHash: devPasswordHash,
       role: Role.PATIENT,
+      isActive: true,
       isEmailVerified: true,
       profile: {
         create: {

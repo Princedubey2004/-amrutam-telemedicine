@@ -1237,7 +1237,7 @@ x-payment-signature: 4f5a...[hex HMAC SHA-256 signature]
 | Variable | Description | Default / Example |
 |---|---|---|
 | `NODE_ENV` | Application environment (`development`, `production`, `test`) | `development` |
-| `PORT` | HTTP server port | `5000` |
+| `PORT` | HTTP server port | `5001` |
 | `DATABASE_URL` | PostgreSQL connection string | `postgresql://amrutam_user:amrutam_password@localhost:5432/amrutam_telemedicine?schema=public` |
 | `JWT_SECRET` | Secret key for signing and verifying JWT tokens (min 32 chars) | `dev_super_secret_jwt_key_min_32_characters_12345` |
 | `JWT_EXPIRES_IN` | JWT expiration duration | `1d` |
@@ -1323,7 +1323,7 @@ npm run dev
 
 ```bash
 docker build -t amrutam-telemedicine:latest .
-docker run -p 5000:5000 --env-file .env amrutam-telemedicine:latest
+docker run -p 5001:5001 --env-file .env amrutam-telemedicine:latest
 ```
 
 ---
