@@ -1,0 +1,75 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build, Lint & Test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: amrutam_test_user
+          POSTGRES_PASSWORD: amrutam_test_password
+          POSTGRES_DB: amrutam_telemedicine_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U amrutam_test_user -d amrutam_telemedicine_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      NODE_ENV: test
+      PORT: 5000
+      DATABASE_URL: postgresql://amrutam_test_user:amrutam_test_password@localhost:5432/amrutam_telemedicine_test?schema=public
+      JWT_SECRET: ci_test_secret_key_minimum_32_characters_long_12345
+      JWT_EXPIRES_IN: 1d
+      CORS_ORIGIN: "*"
+      PAYMENT_PROVIDER: mock
+      PAYMENT_WEBHOOK_SECRET: ci_payment_webhook_secret_key_12345
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20.x (Active LTS)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: npm
+
+      - name: Install Project Dependencies
+        run: npm ci
+
+      - name: Validate Prisma Schema
+        run: npm run prisma:validate
+
+      - name: Generate Prisma Client
+        run: npm run prisma:generate
+
+      - name: Apply Database Migrations
+        run: npx prisma migrate deploy
+
+      - name: Static Type Check (TypeScript)
+        run: npm run typecheck
+
+      - name: Code Quality & Linting (ESLint)
+        run: npm run lint
+
+      - name: Run Test Suite (Unit, RBAC & Integration)
+        run: npm test
+
+      - name: Compile Production Build
+        run: npm run build
